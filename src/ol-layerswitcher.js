@@ -1,7 +1,9 @@
-import Control from 'ol/control/Control';
-import { unByKey } from 'ol/Observable';
+import Control from 'ol/control/Control'
+import { unByKey } from 'ol/Observable'
 
-var CSS_PREFIX = 'layer-switcher-';
+var CSS_PREFIX = 'layer-switcher-'
+var todebug = true
+var debug = todebug ? console.log.bind(window.console) : function () {}
 
 /**
  * OpenLayers Layer Switcher Control.
@@ -25,174 +27,173 @@ var CSS_PREFIX = 'layer-switcher-';
  * @param {boolean} opt_options.reverse Reverse the layer order. Defaults to true.
  */
 export default class LayerSwitcher extends Control {
-  constructor(opt_options) {
-    var options = opt_options || {};
+  // ------------------------------------------------------------------------------------------------ constructor
+  constructor (opt_options) {
+    var options = opt_options || {}
 
     // TODO Next: Rename to showButtonTitle
-    var tipLabel = options.tipLabel ? options.tipLabel : 'Legend';
+    var tipLabel = options.tipLabel ? options.tipLabel : 'Legend'
 
     // TODO Next: Rename to hideButtonTitle
     var collapseTipLabel = options.collapseTipLabel
       ? options.collapseTipLabel
-      : 'Collapse legend';
+      : 'Collapse legend'
 
-    var element = document.createElement('div');
+    var element = document.createElement('div')
 
-    super({ element: element, target: options.target });
+    super({ element: element, target: options.target })
 
-    this.activationMode = options.activationMode || 'mouseover';
+    this.activationMode = options.activationMode || 'mouseover'
 
-    this.startActive = options.startActive === true;
+    this.startActive = options.startActive === true
 
     // TODO Next: Rename to showButtonContent
-    const label = options.label !== undefined ? options.label : '';
+    const label = options.label !== undefined ? options.label : ''
 
     // TODO Next: Rename to hideButtonContent
     const collapseLabel =
-      options.collapseLabel !== undefined ? options.collapseLabel : '\u00BB';
+      options.collapseLabel !== undefined ? options.collapseLabel : '\u00BB'
 
     this.groupSelectStyle = LayerSwitcher.getGroupSelectStyle(
       options.groupSelectStyle
-    );
+    )
 
-    this.reverse = options.reverse !== false;
+    this.reverse = options.reverse !== false
 
-    this.mapListeners = [];
+    this.mapListeners = []
 
-    this.hiddenClassName = 'ol-unselectable ol-control layer-switcher';
+    this.hiddenClassName = 'ol-unselectable ol-control layer-switcher'
     if (LayerSwitcher.isTouchDevice_()) {
-      this.hiddenClassName += ' touch';
+      this.hiddenClassName += ' touch'
     }
-    this.shownClassName = 'shown';
+    this.shownClassName = 'shown'
 
-    element.className = this.hiddenClassName;
+    element.className = this.hiddenClassName
 
-    var button = document.createElement('button');
-    button.setAttribute('title', tipLabel);
-    button.setAttribute('aria-label', tipLabel);
-    element.appendChild(button);
+    var button = document.createElement('button')
+    button.setAttribute('title', tipLabel)
+    button.setAttribute('aria-label', tipLabel)
+    element.appendChild(button)
 
-    this.panel = document.createElement('div');
-    this.panel.className = 'panel';
-    element.appendChild(this.panel);
-    LayerSwitcher.enableTouchScroll_(this.panel);
+    this.panel = document.createElement('div')
+    this.panel.className = 'panel'
+    element.appendChild(this.panel)
+    LayerSwitcher.enableTouchScroll_(this.panel)
 
-    var this_ = this;
+    var this_ = this
 
-    button.textContent = label;
+    button.textContent = label
 
     element.classList.add(
       CSS_PREFIX + 'group-select-style-' + this.groupSelectStyle
-    );
+    )
 
-    element.classList.add(
-      CSS_PREFIX + 'activation-mode-' + this.activationMode
-    );
+    element.classList.add(CSS_PREFIX + 'activation-mode-' + this.activationMode)
 
     if (this.activationMode === 'click') {
       // TODO Next: Remove in favour of layer-switcher-activation-mode-click
-      element.classList.add('activationModeClick');
+      element.classList.add('activationModeClick')
       if (this.startActive) {
-        button.textContent = collapseLabel;
-        button.setAttribute('title', collapseTipLabel);
-        button.setAttribute('aria-label', collapseTipLabel);
+        button.textContent = collapseLabel
+        button.setAttribute('title', collapseTipLabel)
+        button.setAttribute('aria-label', collapseTipLabel)
       }
       button.onclick = function (e) {
-        e = e || window.event;
+        e = e || window.event
         if (this_.element.classList.contains(this_.shownClassName)) {
-          this_.hidePanel();
-          button.textContent = label;
-          button.setAttribute('title', tipLabel);
-          button.setAttribute('aria-label', tipLabel);
+          this_.hidePanel()
+          button.textContent = label
+          button.setAttribute('title', tipLabel)
+          button.setAttribute('aria-label', tipLabel)
         } else {
-          this_.showPanel();
-          button.textContent = collapseLabel;
-          button.setAttribute('title', collapseTipLabel);
-          button.setAttribute('aria-label', collapseTipLabel);
+          this_.showPanel()
+          button.textContent = collapseLabel
+          button.setAttribute('title', collapseTipLabel)
+          button.setAttribute('aria-label', collapseTipLabel)
         }
-        e.preventDefault();
-      };
+        e.preventDefault()
+      }
     } else {
       button.onmouseover = function (e) {
-        this_.showPanel();
-      };
+        this_.showPanel()
+      }
 
       button.onclick = function (e) {
-        e = e || window.event;
-        this_.showPanel();
-        e.preventDefault();
-      };
+        e = e || window.event
+        this_.showPanel()
+        e.preventDefault()
+      }
 
       this_.panel.onmouseout = function (e) {
-        e = e || window.event;
+        e = e || window.event
         if (!this_.panel.contains(e.toElement || e.relatedTarget)) {
-          this_.hidePanel();
+          this_.hidePanel()
         }
-      };
+      }
     }
   }
 
-  /**
+  /** -------------------------------------------------------------------------------------------------------- setMap
    * Set the map instance the control is associated with.
    * @param {ol/Map~Map} map The map instance.
    */
-  setMap(map) {
+  setMap (map) {
     // Clean up listeners associated with the previous map
     for (var i = 0; i < this.mapListeners.length; i++) {
-      unByKey(this.mapListeners[i]);
+      unByKey(this.mapListeners[i])
     }
-    this.mapListeners.length = 0;
+    this.mapListeners.length = 0
     // Wire up listeners etc. and store reference to new map
-    super.setMap(map);
+    super.setMap(map)
     if (map) {
       if (this.startActive) {
-        this.showPanel();
+        this.showPanel()
       } else {
-        this.renderPanel();
+        this.renderPanel()
       }
       if (this.activationMode !== 'click') {
-        var this_ = this;
+        var this_ = this
         this.mapListeners.push(
           map.on('pointerdown', function () {
-            this_.hidePanel();
+            this_.hidePanel()
           })
-        );
+        )
       }
     }
   }
 
-  /**
+  /** -------------------------------------------------------------------------------------------------------- showPanel
    * Show the layer panel.
    */
-  showPanel() {
+  showPanel () {
     if (!this.element.classList.contains(this.shownClassName)) {
-      this.element.classList.add(this.shownClassName);
-      this.renderPanel();
+      this.element.classList.add(this.shownClassName)
+      this.renderPanel()
     }
   }
 
-  /**
+  /** -------------------------------------------------------------------------------------------------------- hidePanel
    * Hide the layer panel.
    */
-  hidePanel() {
+  hidePanel () {
     if (this.element.classList.contains(this.shownClassName)) {
-      this.element.classList.remove(this.shownClassName);
+      this.element.classList.remove(this.shownClassName)
     }
   }
 
-  /**
+  /** -------------------------------------------------------------------------------------------------------- renderPanel
    * Re-draw the layer panel to represent the current state of the layers.
    */
-  renderPanel() {
-    this.dispatchEvent({ type: 'render' });
+  renderPanel () {
+    this.dispatchEvent({ type: 'render' })
     LayerSwitcher.renderPanel(this.getMap(), this.panel, {
       groupSelectStyle: this.groupSelectStyle,
       reverse: this.reverse
-    });
-    this.dispatchEvent({ type: 'rendercomplete' });
+    })
+    this.dispatchEvent({ type: 'rendercomplete' })
   }
 
-  /**
+  /** -------------------------------------------------------------------------------------------------------- renderPanel
    * **Static** Re-draw the layer panel to represent the current state of the layers.
    * @param {ol/Map~Map} map The OpenLayers Map instance to render layers for
    * @param {Element} panel The DOM Element into which the layer tree will be rendered
@@ -202,29 +203,29 @@ export default class LayerSwitcher extends Control {
    *   `'group'` groups have a checkbox but do not alter child visibility (like QGIS).
    * @param {boolean} options.reverse Reverse the layer order. Defaults to true.
    */
-  static renderPanel(map, panel, options) {
+  static renderPanel (map, panel, options) {
     // Create the event.
-    var render_event = new Event('render');
+    var render_event = new Event('render')
     // Dispatch the event.
-    panel.dispatchEvent(render_event);
+    panel.dispatchEvent(render_event)
 
-    options = options || {};
+    options = options || {}
 
     options.groupSelectStyle = LayerSwitcher.getGroupSelectStyle(
       options.groupSelectStyle
-    );
+    )
 
-    LayerSwitcher.ensureTopVisibleBaseLayerShown_(map);
+    LayerSwitcher.ensureTopVisibleBaseLayerShown_(map)
 
     while (panel.firstChild) {
-      panel.removeChild(panel.firstChild);
+      panel.removeChild(panel.firstChild)
     }
 
     // Reset indeterminate state for all layers and groups before
     // applying based on groupSelectStyle
     LayerSwitcher.forEachRecursive(map, function (l, idx, a) {
-      l.set('indeterminate', false);
-    });
+      l.set('indeterminate', false)
+    })
 
     if (
       options.groupSelectStyle === 'children' ||
@@ -232,124 +233,128 @@ export default class LayerSwitcher extends Control {
     ) {
       // Set visibile and indeterminate state of groups based on
       // their children's visibility
-      LayerSwitcher.setGroupVisibility(map);
+      LayerSwitcher.setGroupVisibility(map)
     } else if (options.groupSelectStyle === 'group') {
       // Set child indetermiate state based on their parent's visibility
-      LayerSwitcher.setChildVisibility(map);
+      LayerSwitcher.setChildVisibility(map)
     }
 
-    var ul = document.createElement('ul');
-    panel.appendChild(ul);
+    var ul = document.createElement('ul')
+    panel.appendChild(ul)
     // passing two map arguments instead of lyr as we're passing the map as the root of the layers tree
-    LayerSwitcher.renderLayers_(map, map, ul, options, function render(
+    LayerSwitcher.renderLayers_(map, map, ul, options, function render (
       changedLyr
     ) {
       // console.log('render');
-      LayerSwitcher.renderPanel(map, panel, options);
-    });
+      LayerSwitcher.renderPanel(map, panel, options)
+    })
 
     // Create the event.
-    var rendercomplete_event = new Event('rendercomplete');
+    var rendercomplete_event = new Event('rendercomplete')
     // Dispatch the event.
-    panel.dispatchEvent(rendercomplete_event);
+    panel.dispatchEvent(rendercomplete_event)
   }
 
-  static isBaseGroup(lyr) {
-    const lyrs = lyr.getLayers ? lyr.getLayers().getArray() : [];
-    return lyrs.length && lyrs[0].get('type') === 'base';
+  // -------------------------------------------------------------------------------------------------------- isBaseGroup
+  static isBaseGroup (lyr) {
+    const lyrs = lyr.getLayers ? lyr.getLayers().getArray() : []
+    return lyrs.length && lyrs[0].get('type') === 'base'
   }
 
-  static setGroupVisibility(map) {
+  // -------------------------------------------------------------------------------------------------------- setGroupVisibility
+  static setGroupVisibility (map) {
     // Get a list of groups, with the deepest first
     const groups = LayerSwitcher.getGroupsAndLayers(map, function (l) {
-      return l.getLayers && !l.get('combine') && !LayerSwitcher.isBaseGroup(l);
-    }).reverse();
+      return l.getLayers && !l.get('combine') && !LayerSwitcher.isBaseGroup(l)
+    }).reverse()
     // console.log(groups.map(g => g.get('title')));
     groups.forEach(function (group) {
       // TODO Can we use getLayersArray, is it public in the esm build?
       const descendantVisibility = group.getLayersArray().map(function (l) {
-        const state = l.getVisible();
+        const state = l.getVisible()
         // console.log('>', l.get('title'), state);
-        return state;
-      });
+        return state
+      })
       // console.log(descendantVisibility);
       if (
         descendantVisibility.every(function (v) {
-          return v === true;
+          return v === true
         })
       ) {
-        group.setVisible(true);
-        group.set('indeterminate', false);
+        group.setVisible(true)
+        group.set('indeterminate', false)
       } else if (
         descendantVisibility.every(function (v) {
-          return v === false;
+          return v === false
         })
       ) {
-        group.setVisible(false);
-        group.set('indeterminate', false);
+        group.setVisible(false)
+        group.set('indeterminate', false)
       } else {
-        group.setVisible(true);
-        group.set('indeterminate', true);
+        group.setVisible(true)
+        group.set('indeterminate', true)
       }
-    });
+    })
   }
 
-  static setChildVisibility(map) {
+  // -------------------------------------------------------------------------------------------------------- setChildVisibility
+  static setChildVisibility (map) {
     // console.log('setChildVisibility');
     const groups = LayerSwitcher.getGroupsAndLayers(map, function (l) {
-      return l.getLayers && !l.get('combine') && !LayerSwitcher.isBaseGroup(l);
-    });
+      return l.getLayers && !l.get('combine') && !LayerSwitcher.isBaseGroup(l)
+    })
     groups.forEach(function (group) {
       // console.log(group.get('title'));
-      var groupVisible = group.getVisible();
-      var groupIndeterminate = group.get('indeterminate');
+      var groupVisible = group.getVisible()
+      var groupIndeterminate = group.get('indeterminate')
       group
         .getLayers()
         .getArray()
         .forEach(function (l) {
           // console.log('>', l.get('title'));
-          l.set('indeterminate', false);
+          l.set('indeterminate', false)
           if ((!groupVisible || groupIndeterminate) && l.getVisible()) {
-            l.set('indeterminate', true);
+            l.set('indeterminate', true)
           }
-        });
-    });
+        })
+    })
   }
 
-  /**
+  /** -------------------------------------------------------------------------------------------------------- ensureTopVisibleBaseLayerShown_
    * **Static** Ensure only the top-most base layer is visible if more than one is visible.
    * @param {ol/Map~Map} map The map instance.
    * @private
    */
-  static ensureTopVisibleBaseLayerShown_(map) {
-    var lastVisibleBaseLyr;
+  static ensureTopVisibleBaseLayerShown_ (map) {
+    var lastVisibleBaseLyr
     LayerSwitcher.forEachRecursive(map, function (l, idx, a) {
       if (l.get('type') === 'base' && l.getVisible()) {
-        lastVisibleBaseLyr = l;
+        lastVisibleBaseLyr = l
       }
-    });
-    if (lastVisibleBaseLyr)
-      LayerSwitcher.setVisible_(map, lastVisibleBaseLyr, true);
+    })
+    if (lastVisibleBaseLyr) {
+      LayerSwitcher.setVisible_(map, lastVisibleBaseLyr, true)
+    }
   }
 
-  static getGroupsAndLayers(lyr, filterFn) {
-    const layers = [];
+  static getGroupsAndLayers (lyr, filterFn) {
+    const layers = []
     filterFn =
       filterFn ||
       function (l, idx, a) {
-        return true;
-      };
+        return true
+      }
     LayerSwitcher.forEachRecursive(lyr, function (l, idx, a) {
       if (l.get('title')) {
         if (filterFn(l, idx, a)) {
-          layers.push(l);
+          layers.push(l)
         }
       }
-    });
-    return layers;
+    })
+    return layers
   }
 
-  /**
+  /** -------------------------------------------------------------------------------------------------------- setVisible_
    * **Static** Toggle the visible state of a layer.
    * Takes care of hiding other layers in the same exclusive group if the layer
    * is toggle to visible.
@@ -362,29 +367,43 @@ export default class LayerSwitcher extends Control {
    *   `'children'` (default) groups have a checkbox and affect child visibility or
    *   `'group'` groups have a checkbox but do not alter child visibility (like QGIS).
    */
-  static setVisible_(map, lyr, visible, groupSelectStyle) {
+  static setVisible_ (map, lyr, visible, groupSelectStyle) {
     // console.log(lyr.get('title'), visible, groupSelectStyle);
-    lyr.setVisible(visible);
+    lyr.setVisible(visible)
     if (visible && lyr.get('type') === 'base') {
       // Hide all other base layers regardless of grouping
       LayerSwitcher.forEachRecursive(map, function (l, idx, a) {
         if (l != lyr && l.get('type') === 'base') {
-          l.setVisible(false);
+          l.setVisible(false)
         }
-      });
+      })
     }
     if (
       lyr.getLayers &&
       !lyr.get('combine') &&
       groupSelectStyle === 'children'
     ) {
-      lyr.getLayers().forEach((l) => {
-        LayerSwitcher.setVisible_(map, l, lyr.getVisible(), groupSelectStyle);
-      });
+      lyr.getLayers().forEach(l => {
+        LayerSwitcher.setVisible_(map, l, lyr.getVisible(), groupSelectStyle)
+      })
     }
   }
 
-  /**
+  /** -------------------------------------------------------------------------------------------------------- setOpacity_
+   * **Static** Toggle the opacity state of a layer.
+   * Takes care of hiding other layers in the same exclusive group if the layer
+   * is toggle to visible.
+   * @private
+   * @param {ol/Map~Map} map The map instance.
+   * @param {ol/layer/Base~BaseLayer} lyr layer whose opacity will be adjusted.
+   * @param {Number} opacity The newly selected opacity value
+   */
+  static setOpacity_ (map, lyr, opacity) {
+    var opacityInt = parseInt(opacity) / 100
+    lyr.setOpacity(opacityInt)
+  }
+
+  /** -------------------------------------------------------------------------------------------------------- renderLayers_
    * **Static** Render all layers that are children of a group.
    * @private
    * @param {ol/Map~Map} map The map instance.
@@ -398,99 +417,153 @@ export default class LayerSwitcher extends Control {
    * @param {Function} render Callback for change event on layer
    * @returns {HTMLElement} List item containing layer control markup
    */
-  static renderLayer_(map, lyr, idx, options, render) {
-    var li = document.createElement('li');
+  static renderLayer_ (map, lyr, idx, options, render) {
+    var li = document.createElement('li')
 
-    var lyrTitle = lyr.get('title');
+    var lyrTitle = lyr.get('title')
 
-    var checkboxId = LayerSwitcher.uuid();
+    var checkboxId = LayerSwitcher.uuid()
 
-    var label = document.createElement('label');
+    var label = document.createElement('label')
 
     if (lyr.getLayers && !lyr.get('combine')) {
-      const isBaseGroup = LayerSwitcher.isBaseGroup(lyr);
+      const isBaseGroup = LayerSwitcher.isBaseGroup(lyr)
 
-      li.classList.add('group');
+      li.classList.add('group')
       if (isBaseGroup) {
-        li.classList.add(CSS_PREFIX + 'base-group');
+        li.classList.add(CSS_PREFIX + 'base-group')
       }
 
       // Group folding
       if (lyr.get('fold')) {
-        li.classList.add(CSS_PREFIX + 'fold');
-        li.classList.add(CSS_PREFIX + lyr.get('fold'));
-        const btn = document.createElement('button');
+        li.classList.add(CSS_PREFIX + 'fold')
+        li.classList.add(CSS_PREFIX + lyr.get('fold'))
+        li.classList.add('layer-switcher-layerElement')
+
+        const btn = document.createElement('button')
+        btn.classList.add('layer-switcher-groupButton')
+
         btn.onclick = function (e) {
-          e = e || window.event;
-          LayerSwitcher.toggleFold_(lyr, li);
-          e.preventDefault();
-        };
-        li.appendChild(btn);
+          e = e || window.event
+          LayerSwitcher.toggleFold_(lyr, li)
+          e.preventDefault()
+        }
+        li.appendChild(btn)
       }
 
       if (!isBaseGroup && options.groupSelectStyle != 'none') {
-        const input = document.createElement('input');
-        input.type = 'checkbox';
-        input.id = checkboxId;
-        input.checked = lyr.getVisible();
-        input.indeterminate = lyr.get('indeterminate');
+        const input = document.createElement('input')
+        input.type = 'checkbox'
+        input.id = checkboxId
+        input.checked = lyr.getVisible()
+        input.indeterminate = lyr.get('indeterminate')
+        input.classList.add('layer-switcher-displayButton')
+
         input.onchange = function (e) {
           LayerSwitcher.setVisible_(
             map,
             lyr,
             e.target.checked,
             options.groupSelectStyle
-          );
-          render(lyr);
-        };
-        li.appendChild(input);
-        label.htmlFor = checkboxId;
+          )
+          render(lyr)
+        }
+        li.appendChild(input)
+        label.htmlFor = checkboxId
       }
+      label.innerHTML = lyrTitle
+      label.classList.add('layer-switcher-topLayerLabel')
+      li.appendChild(label)
 
-      label.innerHTML = lyrTitle;
-      li.appendChild(label);
-      var ul = document.createElement('ul');
-      li.appendChild(ul);
+      // ---------------------------------------------------------------- Setup an opacity range slider
+      // Does not appear to be persisting the elements from one load to the next
+      var opacityDiv = document.createElement('div')
+      opacityDiv.classList.add('layer-switcher-opacityDiv')
 
-      LayerSwitcher.renderLayers_(map, lyr, ul, options, render);
+      var opacityRange = document.createElement('input')
+      opacityRange.type = 'range'
+      opacityRange.min = 0
+      opacityRange.max = 100
+      opacityRange.step = 1
+      opacityRange.value = lyr.getOpacity() * 100
+      opacityRange.class = 'slider'
+      opacityRange.onchange = function (e) {
+        var newOpacity = this.value
+        LayerSwitcher.setOpacity_(map, lyr, newOpacity)
+      }
+      opacityDiv.appendChild(opacityRange)
+      li.appendChild(opacityDiv)
+
+      var ul = document.createElement('ul')
+      li.appendChild(ul)
+
+      // TODO make a dragBar
+      // debug('Making Drag Element')
+      // var dragBar = document.createElement('button')
+      // dragBar.innerHTML = '&UpDownArrow;'
+
+      LayerSwitcher.renderLayers_(map, lyr, ul, options, render)
     } else {
-      li.className = 'layer';
-      var input = document.createElement('input');
+      li.className = 'layer'
+      li.classList.add('layer-switcher-layerElement')
+
+      var input = document.createElement('input')
       if (lyr.get('type') === 'base') {
-        input.type = 'radio';
-        input.name = 'base';
+        input.type = 'radio'
+        input.name = 'base'
       } else {
-        input.type = 'checkbox';
+        input.type = 'checkbox'
       }
-      input.id = checkboxId;
-      input.checked = lyr.get('visible');
-      input.indeterminate = lyr.get('indeterminate');
+      input.id = checkboxId
+      input.checked = lyr.get('visible')
+      input.indeterminate = lyr.get('indeterminate')
+      input.classList.add('layer-switcher-displayButton')
       input.onchange = function (e) {
         LayerSwitcher.setVisible_(
           map,
           lyr,
           e.target.checked,
           options.groupSelectStyle
-        );
-        render(lyr);
-      };
-      li.appendChild(input);
-
-      label.htmlFor = checkboxId;
-      label.innerHTML = lyrTitle;
-
-      var rsl = map.getView().getResolution();
-      if (rsl > lyr.getMaxResolution() || rsl < lyr.getMinResolution()) {
-        label.className += ' disabled';
+        )
+        render(lyr)
       }
 
-      li.appendChild(label);
+      label.htmlFor = checkboxId
+      label.innerHTML = lyrTitle
+      label.classList.add('layer-switcher-subLayerLabel')
+
+      var rsl = map.getView().getResolution()
+      if (rsl > lyr.getMaxResolution() || rsl < lyr.getMinResolution()) {
+        label.className += ' disabled'
+      }
+
+      var displayCheckDiv = document.createElement('div')
+      displayCheckDiv.classList.add('layer-switcher-displayButtonDiv')
+      displayCheckDiv.appendChild(input)
+      displayCheckDiv.appendChild(label)
+
+      // ---------------------------------------------------------------- Setup a legend thumbnail
+      // TODO should the layer switcher only display the layers visible at current zoom
+
+      var thumbnailDiv = document.createElement('div')
+      // Not sure if the 'legend' property of the map layer is standard
+      var thumbnailSrc = lyr.get('legend')
+      if (thumbnailSrc !== null || thumbnailSrc !== undefined) {
+        var thumbnail = document.createElement('img')
+        thumbnail.src = thumbnailSrc
+        thumbnailDiv.appendChild(thumbnail)
+        thumbnailDiv.classList.add('layer-switcher-thumbnailLegendDiv')
+      }
+
+      // Attach all elements to the layer switcher
+      li.appendChild(displayCheckDiv)
+      li.appendChild(thumbnailDiv)
     }
 
-    return li;
+    return li
   }
 
-  /**
+  /** -------------------------------------------------------------------------------------------------------- renderLayers_
    * **Static** Render all layers that are children of a group.
    * @private
    * @param {ol/Map~Map} map The map instance.
@@ -503,116 +576,117 @@ export default class LayerSwitcher extends Control {
    * @param {boolean} options.reverse Reverse the layer order. Defaults to true.
    * @param {Function} render Callback for change event on layer
    */
-  static renderLayers_(map, lyr, elm, options, render) {
-    var lyrs = lyr.getLayers().getArray().slice();
-    if (options.reverse) lyrs = lyrs.reverse();
+  static renderLayers_ (map, lyr, elm, options, render) {
+    var lyrs = lyr
+      .getLayers()
+      .getArray()
+      .slice()
+    if (options.reverse) lyrs = lyrs.reverse()
     for (var i = 0, l; i < lyrs.length; i++) {
-      l = lyrs[i];
+      l = lyrs[i]
       if (l.get('title')) {
-        elm.appendChild(LayerSwitcher.renderLayer_(map, l, i, options, render));
+        elm.appendChild(LayerSwitcher.renderLayer_(map, l, i, options, render))
       }
     }
   }
 
-  /**
+  /** -------------------------------------------------------------------------------------------------------- forEachRecursive
    * **Static** Call the supplied function for each layer in the passed layer group
    * recursing nested groups.
    * @param {ol/layer/Group~LayerGroup} lyr The layer group to start iterating from.
    * @param {Function} fn Callback which will be called for each `ol/layer/Base~BaseLayer`
    * found under `lyr`. The signature for `fn` is the same as `ol/Collection~Collection#forEach`
    */
-  static forEachRecursive(lyr, fn) {
+  static forEachRecursive (lyr, fn) {
     lyr.getLayers().forEach(function (lyr, idx, a) {
-      fn(lyr, idx, a);
+      fn(lyr, idx, a)
       if (lyr.getLayers) {
-        LayerSwitcher.forEachRecursive(lyr, fn);
+        LayerSwitcher.forEachRecursive(lyr, fn)
       }
-    });
+    })
   }
 
-  /**
+  /** -------------------------------------------------------------------------------------------------------- uuid
    * **Static** Generate a UUID
    * Adapted from http://stackoverflow.com/a/2117523/526860
    * @returns {String} UUID
    */
-  static uuid() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (
-      c
-    ) {
-      var r = (Math.random() * 16) | 0,
-        v = c == 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
+  static uuid () {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = (Math.random() * 16) | 0
+      var v = c == 'x' ? r : (r & 0x3) | 0x8
+      return v.toString(16)
+    })
   }
 
-  /**
+  /** -------------------------------------------------------------------------------------------------------- enableTouchScroll_
    * @private
    * @desc Apply workaround to enable scrolling of overflowing content within an
    * element. Adapted from https://gist.github.com/chrismbarr/4107472
    * @param {HTMLElement} elm Element on which to enable touch scrolling
    */
-  static enableTouchScroll_(elm) {
+  static enableTouchScroll_ (elm) {
     if (LayerSwitcher.isTouchDevice_()) {
-      var scrollStartPos = 0;
+      var scrollStartPos = 0
       elm.addEventListener(
         'touchstart',
         function (event) {
-          scrollStartPos = this.scrollTop + event.touches[0].pageY;
+          scrollStartPos = this.scrollTop + event.touches[0].pageY
         },
         false
-      );
+      )
       elm.addEventListener(
         'touchmove',
         function (event) {
-          this.scrollTop = scrollStartPos - event.touches[0].pageY;
+          this.scrollTop = scrollStartPos - event.touches[0].pageY
         },
         false
-      );
+      )
     }
   }
 
-  /**
+  /** -------------------------------------------------------------------------------------------------------- isTouchDevice_
    * @private
    * @desc Determine if the current browser supports touch events. Adapted from
    * https://gist.github.com/chrismbarr/4107472
    * @returns {Boolean} True if client can have 'TouchEvent' event
    */
-  static isTouchDevice_() {
+  static isTouchDevice_ () {
     try {
-      document.createEvent('TouchEvent');
-      return true;
+      document.createEvent('TouchEvent')
+      return true
     } catch (e) {
-      return false;
+      return false
     }
   }
 
-  /**
+  /** -------------------------------------------------------------------------------------------------------- toggleFold_
    * Fold/unfold layer group
    * @private
    * @param {ol/layer/Group~LayerGroup} lyr Layer group to fold/unfold
    * @param {HTMLElement} li List item containing layer group
    */
-  static toggleFold_(lyr, li) {
-    li.classList.remove(CSS_PREFIX + lyr.get('fold'));
-    lyr.set('fold', lyr.get('fold') === 'open' ? 'close' : 'open');
-    li.classList.add(CSS_PREFIX + lyr.get('fold'));
+  static toggleFold_ (lyr, li) {
+    li.classList.remove(CSS_PREFIX + lyr.get('fold'))
+    lyr.set('fold', lyr.get('fold') === 'open' ? 'close' : 'open')
+    li.classList.add(CSS_PREFIX + lyr.get('fold'))
   }
 
-  /**
+  /** -------------------------------------------------------------------------------------------------------- getGroupSelectStyle
    * If a valid groupSelectStyle value is not provided then return the default
    * @private
    * @param {String} groupSelectStyle The string to check for validity
    * @returns {String} The value groupSelectStyle, if valid, the default otherwise
    */
-  static getGroupSelectStyle(groupSelectStyle) {
+  static getGroupSelectStyle (groupSelectStyle) {
     return ['none', 'children', 'group'].indexOf(groupSelectStyle) >= 0
       ? groupSelectStyle
-      : 'children';
+      : 'children'
   }
 }
 
 // Expose LayerSwitcher as ol.control.LayerSwitcher if using a full build of
 // OpenLayers
 if (window.ol && window.ol.control) {
-  window.ol.control.LayerSwitcher = LayerSwitcher;
+  window.ol.control.LayerSwitcher = LayerSwitcher
 }
